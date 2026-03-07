@@ -2,6 +2,49 @@
 {% block title %}Admin Dashboard{% endblock %}
 
 {% block content %}
-<h2>Admin Dashboard</h2>
-<p>Welcome, Admin. Dashboard content.</p>
+<h2 class="mb-4">Admin Dashboard</h2>
+
+<div class="row">
+    <div class="col-md-3 mb-3">
+        <div class="card text-white bg-primary">
+            <div class="card-body text-center">
+                <h5 class="card-title">Companies</h5>
+                <h2>{{ stats.total_companies }}</h2>
+                <small>{{ stats.pending_companies }} pending</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card text-white bg-success">
+            <div class="card-body text-center">
+                <h5 class="card-title">Students</h5>
+                <h2>{{ stats.total_students }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card text-white bg-info">
+            <div class="card-body text-center">
+                <h5 class="card-title">Placement Drives</h5>
+                <h2>{{ stats.total_drives }}</h2>
+                <small>{{ stats.pending_drives }} pending</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card text-white bg-warning">
+            <div class="card-body text-center">
+                <h5 class="card-title">Applications</h5>
+                <h2>{{ stats.total_applications }}</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-3"><a href="{{ url_for('admin_companies') }}" class="btn btn-outline-primary w-100">Manage Companies</a></div>
+    <div class="col-md-3"><a href="{{ url_for('admin_students') }}" class="btn btn-outline-success w-100">Manage Students</a></div>
+    <div class="col-md-3"><a href="{{ url_for('admin_drives') }}" class="btn btn-outline-info w-100">Manage Drives</a></div>
+    <div class="col-md-3"><a href="{{ url_for('admin_applications') }}" class="btn btn-outline-warning w-100">View Applications</a></div>
+</div>
 {% endblock %}

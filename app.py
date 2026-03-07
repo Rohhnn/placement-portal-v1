@@ -44,7 +44,7 @@ def load_user(user_id):
 app = create_app()
 
 
-# ---- Home route ----
+# ---- Home ----
 
 @app.route('/')
 def home():
@@ -75,7 +75,6 @@ def login():
             flash('Your account has been deactivated. Contact admin.', 'danger')
             return redirect(url_for('login'))
 
-        # Company must be approved before logging in
         if user.role == 'company' and user.company:
             if user.company.approval_status != 'approved':
                 flash('Your company registration is pending admin approval.', 'warning')
@@ -84,7 +83,6 @@ def login():
                 flash('Your company has been blacklisted.', 'danger')
                 return redirect(url_for('login'))
 
-        # Student blacklist check
         if user.role == 'student' and user.student:
             if user.student.is_blacklisted:
                 flash('Your account has been blacklisted.', 'danger')
@@ -122,7 +120,7 @@ def register():
             role=role
         )
         db.session.add(user)
-        db.session.flush()  # Get user.id before committing
+        db.session.flush()
 
         if role == 'company':
             company = Company(
@@ -137,7 +135,6 @@ def register():
             db.session.add(company)
 
         elif role == 'student':
-            # Handle resume upload
             resume_path = None
             if 'resume' in request.files:
                 file = request.files['resume']
@@ -177,7 +174,7 @@ def logout():
     return redirect(url_for('login'))
 
 
-# ---- Dashboard placeholders ----
+# ---- Admin routes ----
 
 @app.route('/admin/dashboard')
 @login_required
@@ -185,8 +182,175 @@ def admin_dashboard():
     if current_user.role != 'admin':
         flash('Access denied.', 'danger')
         return redirect(url_for('home'))
-    return render_template('admin/dashboard.html')
 
+    from models import Company, Student, PlacementDrive, Application
+    stats = {
+        'total_companies': Company.query.count(),
+        'total_students': Student.query.count(),
+        'total_drives': PlacementDrive.query.count(),
+        'total_applications': Application.query.count(),
+        'pending_companies': Company.query.filter_by(approval_status='pending').count(),
+        'pending_drives': PlacementDrive.query.filter_by(status='pending').count()
+    }
+    return render_template('admin/dashboard.html', stats=stats)
+
+
+@app.route('/admin/companies')
+@login_required
+def admin_companies():
+    if current_user.role != 'admin':
+        flash('Access denied.', 'danger')
+        return redirect(url_for('home'))
+
+    from models import Company
+    search = request.args.get('search', '')
+    if search:
+        companies = Company.query.filter(
+            (Company.company_name.ilike(f'%{search}%')) |
+            (Company.industry.ilike(f'%{search}%'))
+        ).all()
+    else:
+        companies = Company.query.all()
+    return render_template('admin/companies.html', companies=companies, search=search)
+
+
+@app.route('/admin/company/<int:company_id>/approve')
+@login_required
+def admin_approve_company(company_id):
+    if current_user.role != 'admin':
+        flash('Access denied.', 'danger')
+        return redirect(url_for('home'))
+
+    from models import Company
+    company = Company.query.get_or_404(company_id)
+    company.approval_status = 'approved'
+    db.session.commit()
+    flash(f'{company.company_name} has been approved.', 'success')
+    return redirect(url_for('admin_companies'))
+
+
+@app.route('/admin/company/<int:company_id>/reject')
+@login_required
+def admin_reject_company(company_id):
+    if current_user.role != 'admin':
+        flash('Access denied.', 'danger')
+        return redirect(url_for('home'))
+
+    from models import Company
+    company = Company.query.get_or_404(company_id)
+    company.approval_status = 'rejected'
+    db.session.commit()
+    flash(f'{company.company_name} has been rejected.', 'warning')
+    return redirect(url_for('admin_companies'))
+
+
+@app.route('/admin/company/<int:company_id>/blacklist')
+@login_required
+def admin_blacklist_company(company_id):
+    if current_user.role != 'admin':
+        flash('Access denied.', 'danger')
+        return redirect(url_for('home'))
+
+    from models import Company
+    company = Company.query.get_or_404(company_id)
+    company.is_blacklisted = not company.is_blacklisted
+    db.session.commit()
+    status = 'blacklisted' if company.is_blacklisted else 'unblacklisted'
+    flash(f'{company.company_name} has been {status}.', 'info')
+    return redirect(url_for('admin_companies'))
+
+
+@app.route('/admin/students')
+@login_required
+def admin_students():
+    if current_user.role != 'admin':
+        flash('Access denied.', 'danger')
+        return redirect(url_for('home'))
+
+    from models import Student
+    search = request.args.get('search', '')
+    if search:
+        students = Student.query.filter(
+            (Student.full_name.ilike(f'%{search}%')) |
+            (Student.email.ilike(f'%{search}%')) |
+            (Student.phone.ilike(f'%{search}%'))
+        ).all()
+    else:
+        students = Student.query.all()
+    return render_template('admin/students.html', students=students, search=search)
+
+
+@app.route('/admin/student/<int:student_id>/blacklist')
+@login_required
+def admin_blacklist_student(student_id):
+    if current_user.role != 'admin':
+        flash('Access denied.', 'danger')
+        return redirect(url_for('home'))
+
+    from models import Student
+    student = Student.query.get_or_404(student_id)
+    student.is_blacklisted = not student.is_blacklisted
+    db.session.commit()
+    status = 'blacklisted' if student.is_blacklisted else 'unblacklisted'
+    flash(f'{student.full_name} has been {status}.', 'info')
+    return redirect(url_for('admin_students'))
+
+
+@app.route('/admin/drives')
+@login_required
+def admin_drives():
+    if current_user.role != 'admin':
+        flash('Access denied.', 'danger')
+        return redirect(url_for('home'))
+
+    from models import PlacementDrive
+    drives = PlacementDrive.query.all()
+    return render_template('admin/drives.html', drives=drives)
+
+
+@app.route('/admin/drive/<int:drive_id>/approve')
+@login_required
+def admin_approve_drive(drive_id):
+    if current_user.role != 'admin':
+        flash('Access denied.', 'danger')
+        return redirect(url_for('home'))
+
+    from models import PlacementDrive
+    drive = PlacementDrive.query.get_or_404(drive_id)
+    drive.status = 'approved'
+    db.session.commit()
+    flash(f'Drive "{drive.job_title}" has been approved.', 'success')
+    return redirect(url_for('admin_drives'))
+
+
+@app.route('/admin/drive/<int:drive_id>/reject')
+@login_required
+def admin_reject_drive(drive_id):
+    if current_user.role != 'admin':
+        flash('Access denied.', 'danger')
+        return redirect(url_for('home'))
+
+    from models import PlacementDrive
+    drive = PlacementDrive.query.get_or_404(drive_id)
+    drive.status = 'rejected'
+    db.session.commit()
+    flash(f'Drive "{drive.job_title}" has been rejected.', 'warning')
+    return redirect(url_for('admin_drives'))
+
+
+@app.route('/admin/applications')
+@login_required
+def admin_applications():
+    if current_user.role != 'admin':
+        flash('Access denied.', 'danger')
+        return redirect(url_for('home'))
+
+    from models import Application
+    applications = Application.query.all()
+    return render_template('admin/applications.html', applications=applications)
+
+
+# ---- Company dashboard placeholder ----
 
 @app.route('/company/dashboard')
 @login_required
@@ -196,6 +360,8 @@ def company_dashboard():
         return redirect(url_for('home'))
     return render_template('company/dashboard.html')
 
+
+# ---- Student dashboard placeholder ----
 
 @app.route('/student/dashboard')
 @login_required

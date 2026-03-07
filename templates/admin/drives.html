@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% block title %}Manage Placement Drives{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">Manage Placement Drives</h2>
+
+<table class="table table-bordered table-hover">
+    <thead class="table-dark">
+        <tr>
+            <th>ID</th>
+            <th>Job Title</th>
+            <th>Company</th>
+            <th>Salary Range</th>
+            <th>Deadline</th>
+            <th>Status</th>
+            <th>Applications</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for drive in drives %}
+        <tr>
+            <td>{{ drive.id }}</td>
+            <td>{{ drive.job_title }}</td>
+            <td>{{ drive.company.company_name }}</td>
+            <td>{{ drive.salary_range or '-' }}</td>
+            <td>{{ drive.application_deadline or '-' }}</td>
+            <td>
+                {% if drive.status == 'approved' %}
+                    <span class="badge bg-success">Approved</span>
+                {% elif drive.status == 'rejected' %}
+                    <span class="badge bg-danger">Rejected</span>
+                {% elif drive.status == 'closed' %}
+                    <span class="badge bg-secondary">Closed</span>
+                {% else %}
+                    <span class="badge bg-warning text-dark">Pending</span>
+                {% endif %}
+            </td>
+            <td>{{ drive.applications | length }}</td>
+            <td>
+                {% if drive.status == 'pending' %}
+                    <a href="{{ url_for('admin_approve_drive', drive_id=drive.id) }}" class="btn btn-sm btn-success">Approve</a>
+                    <a href="{{ url_for('admin_reject_drive', drive_id=drive.id) }}" class="btn btn-sm btn-danger">Reject</a>
+                {% endif %}
+            </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="8" class="text-center">No placement drives found.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary">Back to Dashboard</a>
+{% endblock %}

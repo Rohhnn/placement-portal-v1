@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% block title %}Manage Students{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">Manage Students</h2>
+
+<form method="GET" class="mb-4">
+    <div class="input-group">
+        <input type="text" class="form-control" name="search" placeholder="Search by name, email, or phone" value="{{ search }}">
+        <button class="btn btn-primary" type="submit">Search</button>
+        {% if search %}
+        <a href="{{ url_for('admin_students') }}" class="btn btn-secondary">Clear</a>
+        {% endif %}
+    </div>
+</form>
+
+<table class="table table-bordered table-hover">
+    <thead class="table-dark">
+        <tr>
+            <th>ID</th>
+            <th>Full Name</th>
+            <th>Email</th>
+            <th>Phone</th>
+            <th>Education</th>
+            <th>Skills</th>
+            <th>Blacklisted</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for student in students %}
+        <tr>
+            <td>{{ student.id }}</td>
+            <td>{{ student.full_name }}</td>
+            <td>{{ student.email or '-' }}</td>
+            <td>{{ student.phone or '-' }}</td>
+            <td>{{ student.education or '-' }}</td>
+            <td>{{ student.skills or '-' }}</td>
+            <td>
+                {% if student.is_blacklisted %}
+                    <span class="badge bg-danger">Yes</span>
+                {% else %}
+                    <span class="badge bg-secondary">No</span>
+                {% endif %}
+            </td>
+            <td>
+                <a href="{{ url_for('admin_blacklist_student', student_id=student.id) }}" class="btn btn-sm btn-dark">
+                    {{ 'Unblacklist' if student.is_blacklisted else 'Blacklist' }}
+                </a>
+            </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="8" class="text-center">No students found.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary">Back to Dashboard</a>
+{% endblock %}
