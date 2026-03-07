@@ -350,7 +350,7 @@ def admin_applications():
     return render_template('admin/applications.html', applications=applications)
 
 
-# ---- Company dashboard placeholder ----
+# ---- Company routes ----
 
 @app.route('/company/dashboard')
 @login_required
@@ -358,7 +358,120 @@ def company_dashboard():
     if current_user.role != 'company':
         flash('Access denied.', 'danger')
         return redirect(url_for('home'))
-    return render_template('company/dashboard.html')
+
+    from models import PlacementDrive
+    company = current_user.company
+    drives = PlacementDrive.query.filter_by(company_id=company.id).all()
+    return render_template('company/dashboard.html', company=company, drives=drives)
+
+
+@app.route('/company/create-drive', methods=['GET', 'POST'])
+@login_required
+def company_create_drive():
+    if current_user.role != 'company':
+        flash('Access denied.', 'danger')
+        return redirect(url_for('home'))
+
+    from models import PlacementDrive
+    from datetime import datetime
+
+    if request.method == 'POST':
+        deadline_str = request.form.get('application_deadline')
+        deadline = datetime.strptime(deadline_str, '%Y-%m-%d').date() if deadline_str else None
+
+        drive = PlacementDrive(
+            company_id=current_user.company.id,
+            job_title=request.form.get('job_title'),
+            job_description=request.form.get('job_description'),
+            eligibility_criteria=request.form.get('eligibility_criteria'),
+            skills_required=request.form.get('skills_required'),
+            salary_range=request.form.get('salary_range'),
+            application_deadline=deadline,
+            status='pending'
+        )
+        db.session.add(drive)
+        db.session.commit()
+        flash('Placement drive created. Waiting for admin approval.', 'info')
+        return redirect(url_for('company_dashboard'))
+
+    return render_template('company/create_drive.html')
+
+
+@app.route('/company/drive/<int:drive_id>/close')
+@login_required
+def company_close_drive(drive_id):
+    if current_user.role != 'company':
+        flash('Access denied.', 'danger')
+        return redirect(url_for('home'))
+
+    from models import PlacementDrive
+    drive = PlacementDrive.query.get_or_404(drive_id)
+    if drive.company_id != current_user.company.id:
+        flash('Access denied.', 'danger')
+        return redirect(url_for('company_dashboard'))
+
+    drive.status = 'closed'
+    db.session.commit()
+    flash(f'Drive "{drive.job_title}" has been closed.', 'info')
+    return redirect(url_for('company_dashboard'))
+
+
+@app.route('/company/drive/<int:drive_id>/reopen')
+@login_required
+def company_reopen_drive(drive_id):
+    if current_user.role != 'company':
+        flash('Access denied.', 'danger')
+        return redirect(url_for('home'))
+
+    from models import PlacementDrive
+    drive = PlacementDrive.query.get_or_404(drive_id)
+    if drive.company_id != current_user.company.id:
+        flash('Access denied.', 'danger')
+        return redirect(url_for('company_dashboard'))
+
+    drive.status = 'approved'
+    db.session.commit()
+    flash(f'Drive "{drive.job_title}" has been reopened.', 'info')
+    return redirect(url_for('company_dashboard'))
+
+
+@app.route('/company/drive/<int:drive_id>/applications')
+@login_required
+def company_view_applications(drive_id):
+    if current_user.role != 'company':
+        flash('Access denied.', 'danger')
+        return redirect(url_for('home'))
+
+    from models import PlacementDrive, Application
+    drive = PlacementDrive.query.get_or_404(drive_id)
+    if drive.company_id != current_user.company.id:
+        flash('Access denied.', 'danger')
+        return redirect(url_for('company_dashboard'))
+
+    applications = Application.query.filter_by(drive_id=drive.id).all()
+    return render_template('company/view_applications.html', drive=drive, applications=applications)
+
+
+@app.route('/company/application/<int:app_id>/update', methods=['POST'])
+@login_required
+def company_update_application(app_id):
+    if current_user.role != 'company':
+        flash('Access denied.', 'danger')
+        return redirect(url_for('home'))
+
+    from models import Application
+    application = Application.query.get_or_404(app_id)
+    if application.drive.company_id != current_user.company.id:
+        flash('Access denied.', 'danger')
+        return redirect(url_for('company_dashboard'))
+
+    new_status = request.form.get('status')
+    if new_status in ['shortlisted', 'selected', 'rejected']:
+        application.status = new_status
+        db.session.commit()
+        flash(f'Application status updated to {new_status}.', 'success')
+
+    return redirect(url_for('company_view_applications', drive_id=application.drive_id))
 
 
 # ---- Student dashboard placeholder ----

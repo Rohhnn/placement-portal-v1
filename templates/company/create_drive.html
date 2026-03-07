@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% block title %}Create Placement Drive{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-7">
+        <h2 class="mb-4">Create Placement Drive</h2>
+        <form method="POST">
+            <div class="mb-3">
+                <label class="form-label">Job Title</label>
+                <input type="text" class="form-control" name="job_title" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Job Description</label>
+                <textarea class="form-control" name="job_description" rows="4"></textarea>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Eligibility Criteria</label>
+                <textarea class="form-control" name="eligibility_criteria" rows="2"></textarea>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Skills Required</label>
+                <input type="text" class="form-control" name="skills_required" placeholder="e.g. Python, SQL, Flask">
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Salary Range</label>
+                <input type="text" class="form-control" name="salary_range" placeholder="e.g. 5-8 LPA">
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Application Deadline</label>
+                <input type="date" class="form-control" name="application_deadline">
+            </div>
+            <button type="submit" class="btn btn-primary">Create Drive</button>
+            <a href="{{ url_for('company_dashboard') }}" class="btn btn-secondary">Cancel</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

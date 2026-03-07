@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+{% block title %}Applications for {{ drive.job_title }}{% endblock %}
+
+{% block content %}
+<h2 class="mb-2">Applications for: {{ drive.job_title }}</h2>
+<p class="text-muted mb-4">Status: {{ drive.status }} | Deadline: {{ drive.application_deadline or 'N/A' }}</p>
+
+<table class="table table-bordered table-hover">
+    <thead class="table-dark">
+        <tr>
+            <th>Student Name</th>
+            <th>Email</th>
+            <th>Education</th>
+            <th>Skills</th>
+            <th>Resume</th>
+            <th>Applied On</th>
+            <th>Status</th>
+            <th>Update Status</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for app in applications %}
+        <tr>
+            <td>{{ app.student.full_name }}</td>
+            <td>{{ app.student.email or '-' }}</td>
+            <td>{{ app.student.education or '-' }}</td>
+            <td>{{ app.student.skills or '-' }}</td>
+            <td>
+                {% if app.student.resume_path %}
+                    <a href="{{ url_for('static', filename='uploads/' + app.student.resume_path) }}" target="_blank">View</a>
+                {% else %}
+                    -
+                {% endif %}
+            </td>
+            <td>{{ app.application_date.strftime('%Y-%m-%d') }}</td>
+            <td>
+                {% if app.status == 'applied' %}
+                    <span class="badge bg-primary">Applied</span>
+                {% elif app.status == 'shortlisted' %}
+                    <span class="badge bg-info">Shortlisted</span>
+                {% elif app.status == 'selected' %}
+                    <span class="badge bg-success">Selected</span>
+                {% elif app.status == 'rejected' %}
+                    <span class="badge bg-danger">Rejected</span>
+                {% endif %}
+            </td>
+            <td>
+                <form method="POST" action="{{ url_for('company_update_application', app_id=app.id) }}" class="d-flex gap-1">
+                    <select name="status" class="form-select form-select-sm">
+                        <option value="shortlisted" {{ 'selected' if app.status == 'shortlisted' }}>Shortlisted</option>
+                        <option value="selected" {{ 'selected' if app.status == 'selected' }}>Selected</option>
+                        <option value="rejected" {{ 'selected' if app.status == 'rejected' }}>Rejected</option>
+                    </select>
+                    <button type="submit" class="btn btn-sm btn-primary">Update</button>
+                </form>
+            </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="8" class="text-center">No applications received yet.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<a href="{{ url_for('company_dashboard') }}" class="btn btn-secondary">Back to Dashboard</a>
+{% endblock %}
