@@ -1,0 +1,7 @@
+{% extends 'base.html' %}
+{% block title %}Company Dashboard{% endblock %}
+
+{% block content %}
+<h2>Company Dashboard</h2>
+<p>Welcome, {{ current_user.company.company_name }}. Dashboard content.</p>
+{% endblock %}
