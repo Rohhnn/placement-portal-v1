@@ -25,6 +25,9 @@
                         <a class="nav-link" href="{{ url_for('company_create_drive') }}">Create Drive</a>
                     {% elif current_user.role == 'student' %}
                         <a class="nav-link" href="{{ url_for('student_dashboard') }}">Dashboard</a>
+                        <a class="nav-link" href="{{ url_for('student_browse_drives') }}">Browse Drives</a>
+                        <a class="nav-link" href="{{ url_for('student_my_applications') }}">My Applications</a>
+                        <a class="nav-link" href="{{ url_for('student_profile') }}">Profile</a>
                     {% endif %}
 
                     <a class="nav-link" href="{{ url_for('logout') }}">Logout</a>

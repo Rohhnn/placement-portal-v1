@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% block title %}Browse Placement Drives{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">Browse Placement Drives</h2>
+
+<form method="GET" class="mb-4">
+    <div class="input-group">
+        <input type="text" class="form-control" name="search" placeholder="Search by job title, skills, or company" value="{{ search }}">
+        <button class="btn btn-primary" type="submit">Search</button>
+        {% if search %}
+        <a href="{{ url_for('student_browse_drives') }}" class="btn btn-secondary">Clear</a>
+        {% endif %}
+    </div>
+</form>
+
+<table class="table table-bordered table-hover">
+    <thead class="table-dark">
+        <tr>
+            <th>Job Title</th>
+            <th>Company</th>
+            <th>Skills Required</th>
+            <th>Salary Range</th>
+            <th>Deadline</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for drive in drives %}
+        <tr>
+            <td>{{ drive.job_title }}</td>
+            <td>{{ drive.company.company_name }}</td>
+            <td>{{ drive.skills_required or '-' }}</td>
+            <td>{{ drive.salary_range or '-' }}</td>
+            <td>{{ drive.application_deadline or '-' }}</td>
+            <td>
+                {% if drive.id in applied_drive_ids %}
+                    <span class="badge bg-secondary">Already Applied</span>
+                {% else %}
+                    <a href="{{ url_for('student_apply', drive_id=drive.id) }}" class="btn btn-sm btn-success">Apply</a>
+                {% endif %}
+            </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6" class="text-center">No approved drives available.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<a href="{{ url_for('student_dashboard') }}" class="btn btn-secondary">Back to Dashboard</a>
+{% endblock %}

@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% block title %}My Applications{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">My Applications</h2>
+
+<table class="table table-bordered table-hover">
+    <thead class="table-dark">
+        <tr>
+            <th>Job Title</th>
+            <th>Company</th>
+            <th>Applied On</th>
+            <th>Status</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for app in applications %}
+        <tr>
+            <td>{{ app.drive.job_title }}</td>
+            <td>{{ app.drive.company.company_name }}</td>
+            <td>{{ app.application_date.strftime('%Y-%m-%d') }}</td>
+            <td>
+                {% if app.status == 'applied' %}
+                    <span class="badge bg-primary">Applied</span>
+                {% elif app.status == 'shortlisted' %}
+                    <span class="badge bg-info">Shortlisted</span>
+                {% elif app.status == 'selected' %}
+                    <span class="badge bg-success">Selected</span>
+                {% elif app.status == 'rejected' %}
+                    <span class="badge bg-danger">Rejected</span>
+                {% endif %}
+            </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="4" class="text-center">You have not applied to any drives yet.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<a href="{{ url_for('student_dashboard') }}" class="btn btn-secondary">Back to Dashboard</a>
+{% endblock %}

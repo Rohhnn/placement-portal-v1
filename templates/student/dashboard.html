@@ -2,6 +2,62 @@
 {% block title %}Student Dashboard{% endblock %}
 
 {% block content %}
-<h2>Student Dashboard</h2>
-<p>Welcome, {{ current_user.student.full_name }}. Dashboard content.</p>
+<h2 class="mb-4">Welcome, {{ student.full_name }}</h2>
+
+{% if notifications %}
+<div class="card mb-4 border-info">
+    <div class="card-header bg-info text-white">Notifications</div>
+    <div class="card-body">
+        {% for app in notifications %}
+            <p>
+                Your application for <strong>{{ app.drive.job_title }}</strong> at
+                <strong>{{ app.drive.company.company_name }}</strong> has been updated to
+                {% if app.status == 'shortlisted' %}
+                    <span class="badge bg-info">Shortlisted</span>
+                {% elif app.status == 'selected' %}
+                    <span class="badge bg-success">Selected</span>
+                {% elif app.status == 'rejected' %}
+                    <span class="badge bg-danger">Rejected</span>
+                {% endif %}
+            </p>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card text-white bg-primary">
+            <div class="card-body text-center">
+                <h5>Available Drives</h5>
+                <h2>{{ drives | length }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-white bg-success">
+            <div class="card-body text-center">
+                <h5>My Applications</h5>
+                <h2>{{ applications | length }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-white bg-info">
+            <div class="card-body text-center">
+                <h5>Profile</h5>
+                <a href="{{ url_for('student_profile') }}" class="btn btn-light btn-sm mt-2">Edit Profile</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <a href="{{ url_for('student_browse_drives') }}" class="btn btn-outline-primary w-100 mb-2">Browse Placement Drives</a>
+    </div>
+    <div class="col-md-6">
+        <a href="{{ url_for('student_my_applications') }}" class="btn btn-outline-success w-100 mb-2">View My Applications</a>
+    </div>
+</div>
 {% endblock %}

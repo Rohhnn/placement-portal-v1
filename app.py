@@ -474,7 +474,7 @@ def company_update_application(app_id):
     return redirect(url_for('company_view_applications', drive_id=application.drive_id))
 
 
-# ---- Student dashboard placeholder ----
+# ---- Student routes ----
 
 @app.route('/student/dashboard')
 @login_required
@@ -482,7 +482,128 @@ def student_dashboard():
     if current_user.role != 'student':
         flash('Access denied.', 'danger')
         return redirect(url_for('home'))
-    return render_template('student/dashboard.html')
+
+    from models import PlacementDrive, Application
+    student = current_user.student
+
+    approved_drives = PlacementDrive.query.filter_by(status='approved').all()
+    my_applications = Application.query.filter_by(student_id=student.id).all()
+
+    # Collect drive IDs the student already applied to
+    applied_drive_ids = [a.drive_id for a in my_applications]
+
+    # Status change notifications: shortlisted or selected applications
+    notifications = [a for a in my_applications if a.status in ['shortlisted', 'selected', 'rejected']]
+
+    return render_template(
+        'student/dashboard.html',
+        student=student,
+        drives=approved_drives,
+        applications=my_applications,
+        applied_drive_ids=applied_drive_ids,
+        notifications=notifications
+    )
+
+
+@app.route('/student/browse')
+@login_required
+def student_browse_drives():
+    if current_user.role != 'student':
+        flash('Access denied.', 'danger')
+        return redirect(url_for('home'))
+
+    from models import PlacementDrive, Application
+    search = request.args.get('search', '')
+
+    if search:
+        drives = PlacementDrive.query.filter(
+            PlacementDrive.status == 'approved',
+            (PlacementDrive.job_title.ilike(f'%{search}%')) |
+            (PlacementDrive.skills_required.ilike(f'%{search}%')) |
+            (PlacementDrive.company.has(company_name=search))
+        ).all()
+    else:
+        drives = PlacementDrive.query.filter_by(status='approved').all()
+
+    applied_drive_ids = [a.drive_id for a in Application.query.filter_by(student_id=current_user.student.id).all()]
+
+    return render_template('student/browse_drives.html', drives=drives, search=search, applied_drive_ids=applied_drive_ids)
+
+
+@app.route('/student/apply/<int:drive_id>')
+@login_required
+def student_apply(drive_id):
+    if current_user.role != 'student':
+        flash('Access denied.', 'danger')
+        return redirect(url_for('home'))
+
+    from models import PlacementDrive, Application
+
+    drive = PlacementDrive.query.get_or_404(drive_id)
+    if drive.status != 'approved':
+        flash('This drive is not accepting applications.', 'warning')
+        return redirect(url_for('student_browse_drives'))
+
+    existing = Application.query.filter_by(
+        student_id=current_user.student.id,
+        drive_id=drive_id
+    ).first()
+    if existing:
+        flash('You have already applied to this drive.', 'warning')
+        return redirect(url_for('student_browse_drives'))
+
+    application = Application(
+        student_id=current_user.student.id,
+        drive_id=drive_id,
+        status='applied'
+    )
+    db.session.add(application)
+    db.session.commit()
+    flash(f'Successfully applied to "{drive.job_title}".', 'success')
+    return redirect(url_for('student_my_applications'))
+
+
+@app.route('/student/my-applications')
+@login_required
+def student_my_applications():
+    if current_user.role != 'student':
+        flash('Access denied.', 'danger')
+        return redirect(url_for('home'))
+
+    from models import Application
+    applications = Application.query.filter_by(student_id=current_user.student.id).all()
+    return render_template('student/my_applications.html', applications=applications)
+
+
+@app.route('/student/profile', methods=['GET', 'POST'])
+@login_required
+def student_profile():
+    if current_user.role != 'student':
+        flash('Access denied.', 'danger')
+        return redirect(url_for('home'))
+
+    student = current_user.student
+
+    if request.method == 'POST':
+        student.full_name = request.form.get('full_name')
+        student.email = request.form.get('email')
+        student.phone = request.form.get('phone')
+        student.education = request.form.get('education')
+        student.skills = request.form.get('skills')
+
+        if 'resume' in request.files:
+            file = request.files['resume']
+            if file.filename:
+                os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+                filename = secure_filename(f"{current_user.username}_{file.filename}")
+                file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+                student.resume_path = filename
+
+        db.session.commit()
+        flash('Profile updated successfully.', 'success')
+        return redirect(url_for('student_profile'))
+
+    return render_template('student/profile.html', student=student)
 
 
 if __name__ == '__main__':
