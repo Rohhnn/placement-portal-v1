@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% block title %}Student Profile - {{ student.full_name }}{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">Student Profile</h2>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <h5>{{ student.full_name }}</h5>
+        <p>Email: {{ student.email or '-' }} | Phone: {{ student.phone or '-' }}</p>
+        <p>Education: {{ student.education or '-' }}</p>
+        <p>Skills: {{ student.skills or '-' }}</p>
+        {% if student.resume_path %}
+            <a href="{{ url_for('static', filename='uploads/' + student.resume_path) }}" target="_blank" class="btn btn-sm btn-outline-primary">View Resume</a>
+        {% endif %}
+    </div>
+</div>
+
+<h4 class="mb-3">Application History</h4>
+<table class="table table-bordered table-hover">
+    <thead class="table-dark">
+        <tr>
+            <th>Job Title</th>
+            <th>Company</th>
+            <th>Applied On</th>
+            <th>Status</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for app in applications %}
+        <tr>
+            <td>{{ app.drive.job_title }}</td>
+            <td>{{ app.drive.company.company_name }}</td>
+            <td>{{ app.application_date.strftime('%Y-%m-%d') }}</td>
+            <td>
+                {% if app.status == 'applied' %}
+                    <span class="badge bg-primary">Applied</span>
+                {% elif app.status == 'shortlisted' %}
+                    <span class="badge bg-info">Shortlisted</span>
+                {% elif app.status == 'selected' %}
+                    <span class="badge bg-success">Selected</span>
+                {% elif app.status == 'rejected' %}
+                    <span class="badge bg-danger">Rejected</span>
+                {% endif %}
+            </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="4" class="text-center">No applications found.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<button onclick="history.back()" class="btn btn-secondary">Back</button>
+{% endblock %}

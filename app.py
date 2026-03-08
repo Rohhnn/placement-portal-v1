@@ -372,6 +372,11 @@ def company_create_drive():
         flash('Access denied.', 'danger')
         return redirect(url_for('home'))
 
+    # Only approved companies can create drives
+    if current_user.company.approval_status != 'approved':
+        flash('Your company must be approved before creating drives.', 'warning')
+        return redirect(url_for('company_dashboard'))
+
     from models import PlacementDrive
     from datetime import datetime
 
@@ -604,6 +609,21 @@ def student_profile():
         return redirect(url_for('student_profile'))
 
     return render_template('student/profile.html', student=student)
+
+
+# ---- Shared route: view student profile (admin and company) ----
+
+@app.route('/student/<int:student_id>/view')
+@login_required
+def view_student_profile(student_id):
+    if current_user.role not in ['admin', 'company']:
+        flash('Access denied.', 'danger')
+        return redirect(url_for('home'))
+
+    from models import Student, Application
+    student = Student.query.get_or_404(student_id)
+    applications = Application.query.filter_by(student_id=student.id).all()
+    return render_template('view_student.html', student=student, applications=applications)
 
 
 if __name__ == '__main__':

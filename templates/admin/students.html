@@ -31,7 +31,7 @@
         {% for student in students %}
         <tr>
             <td>{{ student.id }}</td>
-            <td>{{ student.full_name }}</td>
+            <td><a href="{{ url_for('view_student_profile', student_id=student.id) }}">{{ student.full_name }}</a></td>
             <td>{{ student.email or '-' }}</td>
             <td>{{ student.phone or '-' }}</td>
             <td>{{ student.education or '-' }}</td>

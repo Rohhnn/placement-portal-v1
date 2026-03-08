@@ -21,7 +21,7 @@
     <tbody>
         {% for app in applications %}
         <tr>
-            <td>{{ app.student.full_name }}</td>
+            <td><a href="{{ url_for('view_student_profile', student_id=app.student.id) }}">{{ app.student.full_name }}</a></td>
             <td>{{ app.student.email or '-' }}</td>
             <td>{{ app.student.education or '-' }}</td>
             <td>{{ app.student.skills or '-' }}</td>
