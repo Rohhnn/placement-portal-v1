@@ -36,13 +36,24 @@ The UI is server-rendered. There is no separate REST API layer.
 ## Project structure
 
 ```
-app.py            # Application factory and routes
-models.py         # SQLAlchemy models
-config.py         # Configuration
-extensions.py     # Flask extensions
-templates/        # Role-specific Jinja2 templates
-static/           # CSS and uploaded files
+.gitignore
+README.md
 requirements.txt
+app.py                 # Application factory and routes
+models.py              # SQLAlchemy models
+config.py              # Configuration
+extensions.py          # Flask extensions
+templates/
+  base.html
+  login.html
+  register.html
+  view_student.html
+  admin/               # Admin dashboards and management views
+  company/             # Company dashboards and drive views
+  student/             # Student dashboards and profile views
+static/
+  css/style.css
+  uploads/             # Resume uploads (contents ignored)
 ```
 
 ## Setup
